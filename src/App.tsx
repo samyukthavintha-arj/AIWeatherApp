@@ -14,6 +14,7 @@ import {
   AirQualityData,
   TempUnit,
 } from "./types/weather";
+import { fetchWeather, fetchAirQuality } from "./utils/apiClient";
 import { Loader2, AlertTriangle, RefreshCw, Compass, Sparkles } from "lucide-react";
 
 // Default City: London, UK
@@ -102,26 +103,17 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const [weatherRes, aqRes] = await Promise.all([
-        fetch(`/api/weather?lat=${lat}&lon=${lon}`),
-        fetch(`/api/air-quality?lat=${lat}&lon=${lon}`),
+      const [wData, aData] = await Promise.all([
+        fetchWeather(lat, lon),
+        fetchAirQuality(lat, lon),
       ]);
 
-      if (!weatherRes.ok) {
-        throw new Error("Failed to load weather forecast");
-      }
-
-      const wData = await weatherRes.json();
       setWeatherData(wData);
-
-      if (aqRes.ok) {
-        const aData = await aqRes.json();
-        setAirQualityData(aData);
-      }
+      setAirQualityData(aData);
     } catch (err: any) {
       console.error("Fetch weather error:", err);
       setError(err.message || "Could not retrieve weather information.");
-    } fontFinally: {
+    } finally {
       setIsLoading(false);
     }
   };

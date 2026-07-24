@@ -54,11 +54,24 @@ GEMINI_API_KEY=your_gemini_api_key_here
    ```
    Open `http://localhost:3000` in your browser.
 
-3. **Production Build**:
-   ```bash
-   npm run build
-   npm start
-   ```
+### Production Build & Deployment
+
+#### Option 1: Full-Stack Container / Cloud Run Deployment (Recommended)
+This mode runs the Node Express server (`server.ts`) alongside the static frontend build, proxying Gemini AI features and weather endpoints.
+```bash
+npm run build
+npm start
+```
+
+#### Option 2: Cloudflare Pages / Static Host Deployment
+If deploying as a static Single Page Application (SPA) on **Cloudflare Pages**, Netlify, or Vercel:
+
+- **Build output directory**: `dist`
+- **Build command**: `npm run build`
+
+> **Note on the "Unexpected token '<', '<!doctype'..." error**:
+> When hosting purely static SPAs on Cloudflare Pages without a backend Node server, requests to `/api/*` endpoints fall back to serving `index.html`. 
+> The app now includes **automatic client-side fallbacks**: if `/api/weather` or `/api/geocoding` returns HTML or fails, the app seamlessly switches to fetching directly from Open-Meteo's public CORS-enabled REST APIs on the client, and gracefully degrades AI features if no Node backend server is present.
 
 ---
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { WeatherData, TempUnit, AIInsights } from "../types/weather";
 import { formatTemp } from "../utils/weatherUtils";
+import { fetchAIInsights, fetchAIQuestionAnswer } from "../utils/apiClient";
 
 interface AIWeatherAssistantProps {
   weather: WeatherData;
@@ -38,7 +39,7 @@ export const AIWeatherAssistant: React.FC<AIWeatherAssistantProps> = ({
   // Auto-fetch AI weather summary when city changes
   useEffect(() => {
     let isMounted = true;
-    const fetchAIInsights = async () => {
+    const loadInsights = async () => {
       setLoadingInsights(true);
       try {
         const weatherSummary = {
@@ -54,19 +55,12 @@ export const AIWeatherAssistant: React.FC<AIWeatherAssistantProps> = ({
           forecast7DaysMin: weather.daily.temperature_2m_min.slice(0, 7),
         };
 
-        const res = await fetch("/api/ai-insights", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            city: cityName,
-            weatherSummary,
-          }),
+        const data = await fetchAIInsights({
+          city: cityName,
+          weatherSummary,
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) setInsights(data);
-        }
+        if (isMounted) setInsights(data);
       } catch (err) {
         console.error("AI Insights fetch error:", err);
       } finally {
@@ -74,7 +68,7 @@ export const AIWeatherAssistant: React.FC<AIWeatherAssistantProps> = ({
       }
     };
 
-    fetchAIInsights();
+    loadInsights();
 
     return () => {
       isMounted = false;
@@ -102,34 +96,16 @@ export const AIWeatherAssistant: React.FC<AIWeatherAssistantProps> = ({
         }%`,
       };
 
-      const res = await fetch("/api/ai-insights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          city: cityName,
-          weatherSummary,
-          type: "qa",
-          userQuestion: userText,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "ai", text: data.answer || "I couldn't process that question right now." },
-        ]);
-      } else {
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "ai", text: "AI Assistant is temporarily busy. Please try again." },
-        ]);
-      }
+      const aiAnswer = await fetchAIQuestionAnswer(cityName, weatherSummary, userText);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "ai", text: aiAnswer },
+      ]);
     } catch (err) {
       console.error("QA error:", err);
       setChatMessages((prev) => [
         ...prev,
-        { role: "ai", text: "Network error fetching AI response." },
+        { role: "ai", text: "Unable to process AI question." },
       ]);
     } finally {
       setIsAsking(false);

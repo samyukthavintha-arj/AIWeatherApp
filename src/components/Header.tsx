@@ -10,6 +10,7 @@ import {
   Thermometer,
 } from "lucide-react";
 import { GeocodingResult, TempUnit } from "../types/weather";
+import { fetchGeocoding } from "../utils/apiClient";
 
 interface HeaderProps {
   currentCity: GeocodingResult | null;
@@ -51,11 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(
-          `/api/geocoding?q=${encodeURIComponent(searchQuery.trim())}`
-        );
-        const data = await res.json();
-        setResults(data.results || []);
+        const cityResults = await fetchGeocoding(searchQuery.trim());
+        setResults(cityResults);
         setIsOpen(true);
       } catch (err) {
         console.error("Geocoding fetch error:", err);
